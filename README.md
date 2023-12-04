@@ -12,6 +12,8 @@
 - **book_catalog**: сервис каталога книг
 
 ## Список доступных эндпоинтов:
+### Swagger
+- */swagger:* документация Swagger
 ### Приложение users
 - */users/csrfCookie:* получение csrf токена
 - */users/register:* запрос на регистрацию
