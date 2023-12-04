@@ -38,7 +38,9 @@ INSTALLED_APPS = [
     'api.apps.ApiConfig',
     'users.apps.UsersConfig',
     'book_catalog.apps.BookCatalogConfig',
-    'rest_framework'
+    'rest_framework',
+    'rest_framework_swagger',
+    'drf_yasg'
 ]
 
 MIDDLEWARE = [
