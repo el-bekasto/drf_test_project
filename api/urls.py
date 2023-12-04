@@ -11,4 +11,8 @@ urlpatterns = [
     path('addBook/', AddBookAPIView.as_view()),
     # запрос на написание отзыва о книге (только зарегистрированные пользователи)
     path('writeReview/', WriteReviewAPIView.as_view()),
+    # запрос на добавление книги в избранные
+    path('favorite/<int:book_id>', AddBookToFavorite.as_view()),
+    # запрос на удаление книги из избранных
+    path('removeFavorite/<int:book_id>', RemoveBookFromFavorites.as_view())
 ]

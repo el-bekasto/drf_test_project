@@ -1,22 +1,60 @@
-from django.shortcuts import render
-from django.db.models import Avg
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework.generics import CreateAPIView, ListAPIView, RetrieveAPIView
+from rest_framework.request import Request
+from rest_framework.generics import CreateAPIView, ListAPIView
+from rest_framework import status
 
-from book_catalog.models import *
-from book_catalog.serializers import *
-from .permissions import IsActivated
+from api.serializers import *
 
 from datetime import datetime
+
+
+class RemoveBookFromFavorites(APIView):
+    """
+    Представление для удаления книги из избранных
+    """
+    def get(self, request: Request, book_id):
+        """
+        Удаляет книгу из избранных, если такая книга существует и находится в избранных. Иначе возвращает ошибку
+        :param request: Запрос пользователя
+        :param book_id: Айди книги, которую нужно удалить
+        :return: Response объект
+        """
+        if not Book.objects.filter(id=book_id).exists():
+            return Response({'error': 'Book does not exist!'}, status=status.HTTP_404_NOT_FOUND)
+        if not User.objects.filter(favorite_books__id=book_id).exists():
+            return Response({'error': 'This book is not in your favorites!'}, status=status.HTTP_409_CONFLICT)
+        request.user.favorite_books.remove(Book.objects.get(id=book_id))
+        request.user.save()
+        return Response({'ok': 'You removed this book from your favorites'})
+
+
+class AddBookToFavorite(APIView):
+    """
+    Представление для добавления книги в избранные
+    """
+    def get(self, request: Request, book_id):
+        """
+        Добавляет книгу в избранные, если она существует и не находится в избранных
+
+        :param request: Запрос пользователя
+        :param book_id: Айди книги, которую нужно добавить
+        :return: Response объект
+        """
+        if not Book.objects.filter(id=book_id).exists():
+            return Response({'error': 'Book does not exist!'}, status=status.HTTP_404_NOT_FOUND)
+        if User.objects.filter(favorite_books__id=book_id).exists():
+            return Response({'error': 'You already added this book to your favorites!'}, status=status.HTTP_409_CONFLICT)
+        request.user.favorite_books.add(Book.objects.get(id=book_id))
+        request.user.save()
+        return Response({'ok': f'You added book (id={book_id}) to your favorites!'}, status=status.HTTP_200_OK)
 
 
 class AddBookAPIView(CreateAPIView):
     """
     Представление для обработки запроса на добавление книги
     """
-    permission_classes = (IsActivated,)
     serializer_class = CreateBookSerializer
 
 
@@ -24,7 +62,6 @@ class WriteReviewAPIView(CreateAPIView):
     """
     Представление для обработки запроса на написание отзыва о книге
     """
-    permission_classes = (IsActivated,)
     serializer_class = CreateBookReviewSerializer
 
 
@@ -35,7 +72,7 @@ class GetBookAPIView(APIView):
     permission_classes = (AllowAny,)
 
     def get(self, request, book_id):
-        return Response(BookSerializer(Book.objects.get(id=book_id)).data)
+        return Response(BookSerializer(Book.objects.get(id=book_id), context={'request': request}).data)
 
 
 class ListBooks(ListAPIView):

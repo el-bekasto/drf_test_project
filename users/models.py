@@ -19,7 +19,7 @@ class User(AbstractUser):
         updated_at (datetime): Дата последнего изменения данных пользователя
         created_at (datetime): Дата создания пользователя (регистрации)
     """
-    favorite_books = models.ManyToManyField('book_catalog.Book', related_name='favorited_users')
+    favorite_books = models.ManyToManyField('book_catalog.Book', related_name='favorited_users', blank=True)
     is_activated = models.BooleanField(default=False)
     activation_token = models.CharField(max_length=200, default=uuid1, blank=True)
     updated_at = models.DateTimeField(auto_now=True)

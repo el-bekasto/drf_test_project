@@ -1,5 +1,5 @@
 from rest_framework.serializers import HiddenField, CurrentUserDefault, ModelSerializer, ReadOnlyField, SerializerMethodField
-from .models import *
+from book_catalog.models import *
 
 from typing import List
 
@@ -70,7 +70,32 @@ class BookSerializer(ListBookSerializer):
     Attributes:
         reviews (SerializerMethodField): Отзывы на книгу
     """
+    me = SerializerMethodField()
     reviews = SerializerMethodField()
+    is_favorite = SerializerMethodField()
+
+    def get_me(self, obj):
+        """
+        Получение информации о пользователе для определения избранность книги
+
+        :param obj: объект книги
+        :return: айди пользователя
+        """
+        request = self.context.get('request', None)
+        if request:
+            return request.user.id
+
+    def get_is_favorite(self, obj):
+        """
+        Получение информации об избранности книги
+
+        :param obj: Объект книги
+        :return: Избранность книги
+        """
+        if User.objects.filter(favorite_books__id=obj.id).exists():
+            if User.objects.get(favorite_books__id=obj.id).id == self.get_me(obj):
+                return True
+        return False
 
     def get_reviews(self, obj):
         """
@@ -90,7 +115,7 @@ class BookSerializer(ListBookSerializer):
             fields (List[str]): Список полей модели для сериализации
         """
         model = Book
-        fields = ListBookSerializer.Meta.fields + ['description', 'created_at', 'reviews']
+        fields = ListBookSerializer.Meta.fields + ['description', 'created_at', 'reviews', 'is_favorite', 'me']
 
 
 class CreateBookSerializer(ModelSerializer):
